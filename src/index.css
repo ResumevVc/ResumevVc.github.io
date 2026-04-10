@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-retro-white text-retro-black font-sans m-0 p-0;
+  }
+}
+
+@layer components {
+  .retro-btn {
+    @apply px-4 py-2 bg-retro-black text-retro-white font-mono uppercase tracking-wider border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors duration-200;
+  }
+  
+  .retro-input {
+    @apply w-full px-3 py-2 bg-white border-2 border-retro-black focus:outline-none focus:border-retro-red font-mono text-sm;
+  }
+
+  .retro-card {
+    @apply bg-white border-2 border-retro-black p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)];
+  }
+  
+  .retro-border {
+    @apply border-2 border-retro-black;
+  }
+}

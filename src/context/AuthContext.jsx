@@ -1,0 +1,64 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+
+const AuthContext = createContext();
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const loginWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error('Error during Google Sign In:', error);
+    }
+  };
+
+  const loginWithEmail = async (email, password) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signupWithEmail = async (email, password) => {
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  const logoutAction = async () => {
+    await signOut(auth);
+  };
+
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isLoading: loading,
+    loginWithGoogle,
+    loginWithEmail,
+    signupWithEmail,
+    logout: logoutAction,
+    getTokenSilently: async () => {
+      if (user) {
+        return await user.getIdToken();
+      }
+      throw new Error('No user logged in');
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+}
