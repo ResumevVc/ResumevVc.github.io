@@ -55,8 +55,6 @@ export default function Dashboard() {
     }
   };
 
-  const mainRepos = repos.filter(r => !r.baseRepoId);
-
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-4 border-retro-black pb-4 gap-4">
@@ -69,9 +67,9 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-220px)] pr-2">
         {repos.map(repo => (
-          <div key={repo._id} onClick={() => navigate(`/app/repo/${repo._id}`)} className="retro-card cursor-pointer relative group">
+          <div key={repo._id} onClick={() => navigate(`/app/repo/${repo._id}`)} className="retro-card cursor-pointer relative group flex items-center justify-between">
             <button 
               onClick={(e) => handleDelete(e, repo._id)} 
               className="absolute top-4 right-4 text-retro-black hover:text-white hover:bg-retro-red p-2 border-2 border-retro-black transition-colors z-10 shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
@@ -79,29 +77,31 @@ export default function Dashboard() {
             >
               <Trash2 className="w-5 h-5" />
             </button>
-            <div className="flex justify-between items-start pr-12">
+            <div className="flex items-center gap-4 pr-12">
+              <div className="p-3 border-2 border-retro-black bg-retro-black text-white shadow-[4px_4px_0px_0px_rgba(230,57,70,1)]">
+                {repo.baseRepoId ? <GitBranch className="w-6 h-6" /> : <Database className="w-6 h-6" />}
+              </div>
               <div>
-                <h3 className="font-mono text-xl font-bold flex items-center text-retro-red">
-                  {repo.baseRepoId ? <GitBranch className="w-5 h-5 mr-2" /> : <Database className="w-5 h-5 mr-2" />}
+                <h3 className="font-mono text-xl font-bold text-retro-red">
                   {repo.repoName}
                 </h3>
-                <p className="text-sm mt-2 text-retro-black font-bold">
+                <p className="text-sm text-retro-black font-bold">
                   {repo.baseRepoId ? 'Company Branch Fork' : 'Main Repository Template'}
                 </p>
                 {repo.baseRepoId && (
-                  <p className="text-xs mt-2 font-mono bg-retro-gray inline-block px-2 py-1">
+                  <p className="text-xs mt-1 font-mono bg-retro-gray inline-block px-2 py-1">
                     Inherited from Base ID: {repo.baseRepoId}
                   </p>
                 )}
               </div>
-              <span className="text-xs font-mono font-bold px-3 py-1.5 bg-retro-black text-white shadow-[2px_2px_0px_0px_rgba(230,57,70,1)]">
-                {new Date(repo.createdAt).toLocaleDateString()}
-              </span>
             </div>
+            <span className="text-xs font-mono font-bold px-3 py-1.5 bg-retro-black text-white shadow-[2px_2px_0px_0px_rgba(230,57,70,1)]">
+              {new Date(repo.createdAt).toLocaleDateString()}
+            </span>
           </div>
         ))}
         {repos.length === 0 && (
-          <div className="md:col-span-2 lg:col-span-3 text-center font-mono text-retro-black font-bold p-12 border-4 border-dashed border-retro-black bg-retro-gray/30">
+          <div className="text-center font-mono text-retro-black font-bold p-12 border-4 border-dashed border-retro-black bg-retro-gray/30">
             <div className="inline-block p-4 mb-4 border-2 border-retro-black rounded-full">
               <Database className="w-12 h-12 text-retro-gray" />
             </div>
