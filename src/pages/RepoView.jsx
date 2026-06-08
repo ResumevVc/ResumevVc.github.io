@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { FileJson, History, GitCompare, Save, FileUp, Plus, Trash2, GitMerge, GitCommit, StickyNote } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
-import { getCommits, createCommit, mergeRepo, getRepos, updateRepoNotes, parseResume } from '../services/api';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { getCommits, createCommit, mergeRepo, getRepos, updateRepoNotes, parseResume, forkRepo, getForks } from '../services/api';
 import { useReactToPrint } from 'react-to-print';
 import ResumePDFTemplate from '../components/ResumePDFTemplate';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +19,10 @@ export default function RepoView() {
   const [repoNotes, setRepoNotes] = useState('');
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [currentRepoInfo, setCurrentRepoInfo] = useState(null);
+  const [showForkModal, setShowForkModal] = useState(false);
+  const [forkName, setForkName] = useState('');
+  const [forks, setForks] = useState([]);
+  const [showForks, setShowForks] = useState(false);
   const pdfRef = useRef();
   const { getTokenSilently } = useAuth();
 
@@ -28,22 +32,19 @@ export default function RepoView() {
     onBeforePrint: () => logEvent(analytics, 'pdf_downloaded')
   });
 
-  useEffect(() => {
-    fetchCommits();
-    fetchRepoInfo();
-  }, [repoId]);
-
-  const fetchRepoInfo = async () => {
+  const fetchRepoInfo = useCallback(async () => {
     try {
       const token = await getTokenSilently();
       const data = await getRepos(token);
       const info = data.find(r => r._id === repoId);
       setCurrentRepoInfo(info);
       setRepoNotes(info?.notes || '');
-    } catch (err) { }
-  };
+    } catch (err) {
+      console.error(err);
+    }
+  }, [getTokenSilently, repoId]);
 
-  const fetchCommits = async () => {
+  const fetchCommits = useCallback(async () => {
     try {
       const token = await getTokenSilently();
       const data = await getCommits(repoId, token);
@@ -56,13 +57,21 @@ export default function RepoView() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [getTokenSilently, repoId]);
+
+  useEffect(() => {
+    fetchCommits();
+    fetchRepoInfo();
+    fetchForks();
+  }, [fetchCommits, fetchRepoInfo, fetchForks]);
 
   const handleJSONChange = (e) => {
     try {
       const parsed = JSON.parse(e.target.value);
       setResumeData(parsed);
-    } catch (err) { }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const updateField = (field, value) => setResumeData(prev => ({ ...prev, [field]: value }));
@@ -170,6 +179,32 @@ export default function RepoView() {
     }
   };
 
+  const fetchForks = useCallback(async () => {
+    try {
+      const token = await getTokenSilently();
+      const data = await getForks(repoId, token);
+      setForks(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [getTokenSilently, repoId]);
+
+  const handleFork = async (e) => {
+    e.preventDefault();
+    if (!forkName.trim()) return;
+    try {
+      const token = await getTokenSilently();
+      const newFork = await forkRepo(repoId, forkName, token);
+      setShowForkModal(false);
+      setForkName('');
+      fetchForks();
+      alert(`Fork "${newFork.repoName}" created successfully!`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to fork repo');
+    }
+  };
+
   const handleSaveNotes = async () => {
     try {
       const token = await getTokenSilently();
@@ -205,38 +240,63 @@ export default function RepoView() {
   };
 
   return (
-    <div className="flex flex-col h-full relative">
-      <header className="bg-white border-b-2 border-retro-black p-4 flex justify-between items-center z-10 sticky top-0 shrink-0">
+    <div className="flex flex-col h-full relative bg-retro-white">
+      <header className="bg-white border-b-2 border-retro-black p-4 flex flex-col md:flex-row justify-between items-start md:items-center z-10 sticky top-0 shrink-0 gap-4 shadow-[0px_4px_0px_0px_rgba(26,26,26,1)]">
         <div>
-          <h2 className="text-xl font-mono font-bold text-retro-red">{currentRepoInfo?.repoName || repoId}</h2>
-          <p className="text-sm font-mono font-bold text-retro-black uppercase tracking-wider">
+          <h2 className="text-2xl font-mono font-bold text-retro-red bg-gradient-to-r from-retro-red to-retro-black bg-clip-text text-transparent">{currentRepoInfo?.repoName || repoId}</h2>
+          <p className="text-sm font-mono font-bold text-retro-black uppercase tracking-widest mt-1">
             {currentRepoInfo?.baseRepoId ? 'Branch Workspace' : 'Main Workspace'}
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           {currentRepoInfo?.baseRepoId && (
-            <button onClick={handleMerge} className="retro-btn flex items-center bg-retro-black text-white hover:bg-green-600 transition-colors border-2 border-retro-black">
-              <GitMerge className="w-4 h-4 mr-2" /> Push to Main
+            <button onClick={handleMerge} className="retro-btn flex items-center bg-retro-black text-white hover:bg-green-600 transition-colors border-2 border-retro-black shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+              <GitMerge className="w-5 h-5 mr-2" /> Push to Main
             </button>
           )}
 
+          <button onClick={() => setShowForkModal(true)} className="retro-btn-secondary flex items-center border-2 border-retro-black shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:shadow-[6px_6px_0px_0px_rgba(230,57,70,1)]">
+            <GitBranch className="w-5 h-5 mr-2" /> Fork{forks.length > 0 ? ` (${forks.length})` : ''}
+          </button>
           {activeTab === 'editor' && (
-            <label className="retro-btn bg-white text-retro-black hover:bg-retro-black hover:text-white flex items-center cursor-pointer border-2 border-retro-black">
-              <FileUp className="w-4 h-4 mr-2" /> Upload Resume
+            <label className="retro-btn-secondary flex items-center cursor-pointer border-2 border-retro-black shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:shadow-[6px_6px_0px_0px_rgba(230,57,70,1)]">
+              <FileUp className="w-5 h-5 mr-2" /> Upload Resume
               <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleAIParse} />
             </label>
           )}
-          <button onClick={() => handlePrint()} className="retro-btn flex items-center bg-retro-black text-white hover:bg-retro-white hover:text-retro-black border-2 border-retro-black">
+          <button onClick={() => handlePrint()} className="retro-btn flex items-center bg-retro-black text-white hover:bg-retro-white hover:text-retro-black border-2 border-retro-black shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
             Download PDF
           </button>
-          <button onClick={() => setShowCommitModal(true)} className="retro-btn flex items-center bg-retro-red text-white hover:bg-black">
-            <Save className="w-4 h-4 mr-2" /> Commit Chg
+          <button onClick={() => setShowCommitModal(true)} className="retro-btn flex items-center bg-retro-red text-white hover:bg-black border-2 border-retro-black shadow-[4px_4px_0px_0px_rgba(230,57,70,1)]">
+            <Save className="w-5 h-5 mr-2" /> Commit Chg
           </button>
         </div>
       </header>
 
+      {/* Forks List Toggle */}
+      {forks.length > 0 && (
+        <div className="bg-retro-gray/20 border-b-2 border-retro-black px-4 py-2">
+          <button onClick={() => setShowForks(!showForks)} className="font-mono text-sm font-bold text-retro-black hover:text-retro-red transition-colors flex items-center">
+            <GitBranch className="w-4 h-4 mr-2" /> {forks.length} Fork{forks.length > 1 ? 's' : ''} {showForks ? '▲' : '▼'}
+          </button>
+          {showForks && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {forks.map(fork => (
+                <button
+                  key={fork._id}
+                  onClick={() => window.location.href = `/app/repo/${fork._id}`}
+                  className="px-3 py-1.5 font-mono text-xs font-bold bg-white border-2 border-retro-black hover:bg-retro-black hover:text-white transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"
+                >
+                  {fork.repoName}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tabs */}
-      <div className="bg-white border-b-2 border-retro-black flex px-4 shrink-0">
+      <div className="bg-white border-b-2 border-retro-black flex px-4 shrink-0 overflow-x-auto">
         {[
           { id: 'editor', icon: FileJson, label: 'Editor' },
           { id: 'history', icon: History, label: 'Graph' },
@@ -246,9 +306,9 @@ export default function RepoView() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-3 flex items-center font-mono text-sm border-b-4 border-transparent transition-colors ${activeTab === tab.id ? 'border-retro-red text-retro-red font-bold' : 'hover:border-retro-black text-retro-black font-bold'}`}
+            className={`px-6 py-4 flex items-center font-mono text-sm border-b-4 transition-colors whitespace-nowrap ${activeTab === tab.id ? 'border-retro-red text-retro-red font-bold bg-retro-red/5' : 'hover:border-retro-black text-retro-black font-bold'}`}
           >
-            <tab.icon className="w-4 h-4 mr-2" />
+            <tab.icon className="w-5 h-5 mr-2" />
             {tab.label}
           </button>
         ))}
@@ -258,30 +318,30 @@ export default function RepoView() {
         {activeTab === 'editor' && (
           <div className="flex flex-1 gap-6 min-h-0">
             <div className="retro-card flex flex-col flex-1 min-h-0 min-w-0">
-              <h3 className="font-mono font-bold mb-4 border-b-2 border-retro-black pb-2 shrink-0">Visual Builder</h3>
+              <h3 className="font-mono font-bold mb-4 border-b-2 border-retro-black pb-2 shrink-0 bg-gradient-to-r from-retro-black to-retro-red bg-clip-text text-transparent">Visual Builder</h3>
               <div className="overflow-y-auto pr-2 pb-4 space-y-6 min-h-0">
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h4 className="font-mono font-bold text-retro-red uppercase text-sm border-b-2 border-retro-black pb-1">Basic Details</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black">Name</label>
+                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black uppercase tracking-wider">Name</label>
                       <input type="text" className="retro-input" value={resumeData?.name || ''} onChange={(e) => updateField('name', e.target.value)} />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black">Email</label>
+                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black uppercase tracking-wider">Email</label>
                       <input type="email" className="retro-input" value={resumeData?.email || ''} onChange={(e) => updateField('email', e.target.value)} />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black">Phone</label>
+                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black uppercase tracking-wider">Phone</label>
                       <input type="text" className="retro-input" value={resumeData?.phone || ''} onChange={(e) => updateField('phone', e.target.value)} />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black">Location</label>
+                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black uppercase tracking-wider">Location</label>
                       <input type="text" className="retro-input" placeholder="e.g. San Jose, CA" value={resumeData?.location || ''} onChange={(e) => updateField('location', e.target.value)} />
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black">LinkedIn URL</label>
+                      <label className="block text-sm font-bold font-mono mb-1 text-retro-black uppercase tracking-wider">LinkedIn URL</label>
                       <input type="text" className="retro-input" value={resumeData?.linkedin || ''} onChange={(e) => updateField('linkedin', e.target.value)} />
                     </div>
                   </div>
@@ -291,13 +351,13 @@ export default function RepoView() {
                 <div>
                   <h4 className="flex items-center justify-between font-mono font-bold text-retro-red uppercase text-sm border-b-2 border-retro-black pb-1 mb-2">
                     Skills
-                    <button onClick={() => addArrayItem('skills', '')} className="p-1 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black"><Plus className="w-4 h-4" /></button>
+                    <button onClick={() => addArrayItem('skills', '')} className="p-2 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Plus className="w-5 h-5" /></button>
                   </h4>
                   <div className="space-y-2">
                     {(Array.isArray(resumeData.skills) ? resumeData.skills : []).map((skill, index) => (
                       <div key={index} className="flex space-x-2">
-                        <input type="text" className="retro-input py-1 text-sm font-bold" value={skill} onChange={(e) => updateSkill(index, e.target.value)} />
-                        <button onClick={() => removeArrayItem('skills', index)} className="p-2 text-retro-black hover:text-white border-2 border-retro-black hover:bg-retro-red transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <input type="text" className="retro-input py-2 text-sm font-bold" value={skill} onChange={(e) => updateSkill(index, e.target.value)} />
+                        <button onClick={() => removeArrayItem('skills', index)} className="p-2 text-retro-black hover:text-white border-2 border-retro-black hover:bg-retro-red transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                       </div>
                     ))}
                   </div>
@@ -307,12 +367,12 @@ export default function RepoView() {
                 <div>
                   <h4 className="flex items-center justify-between font-mono font-bold text-retro-red uppercase text-sm border-b-2 border-retro-black pb-1 mb-2">
                     Experience
-                    <button onClick={() => addArrayItem('experience', { company: '', role: '', startDate: '', endDate: '', description: '' })} className="p-1 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black"><Plus className="w-4 h-4" /></button>
+                    <button onClick={() => addArrayItem('experience', { company: '', role: '', startDate: '', endDate: '', description: '' })} className="p-2 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Plus className="w-5 h-5" /></button>
                   </h4>
                   <div className="space-y-6">
                     {(Array.isArray(resumeData.experience) ? resumeData.experience : []).map((exp, index) => (
-                      <div key={index} className="border-4 border-retro-black p-4 space-y-4 bg-white relative group shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-                        <button onClick={() => removeArrayItem('experience', index)} className="absolute top-2 right-2 text-retro-black hover:text-white hover:bg-retro-red p-1 transition-colors border-2 border-retro-black"><Trash2 className="w-4 h-4" /></button>
+                      <div key={index} className="border-4 border-retro-black p-4 space-y-4 bg-white relative group shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]">
+                        <button onClick={() => removeArrayItem('experience', index)} className="absolute top-3 right-3 text-retro-black hover:text-white hover:bg-retro-red p-2 transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                         <div className="grid grid-cols-2 gap-3 mt-4">
                           <input type="text" className="retro-input py-2 text-sm font-bold" placeholder="Company" value={exp.company || ''} onChange={(e) => updateArrayItem('experience', index, 'company', e.target.value)} />
                           <input type="text" className="retro-input py-2 text-sm font-bold" placeholder="Role" value={exp.role || ''} onChange={(e) => updateArrayItem('experience', index, 'role', e.target.value)} />
@@ -326,7 +386,7 @@ export default function RepoView() {
                           {getBullets(exp, 'description').map((bullet, bulletIdx) => (
                             <div key={bulletIdx} className="flex space-x-2">
                               <input type="text" className="retro-input py-1 text-sm flex-1 font-bold" value={bullet} onChange={(e) => updateNestedArrayItem('experience', index, 'description', bulletIdx, e.target.value)} />
-                              <button onClick={() => removeNestedArrayItem('experience', index, 'description', bulletIdx)} className="p-1 px-2 text-retro-black border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => removeNestedArrayItem('experience', index, 'description', bulletIdx)} className="p-2 px-3 text-retro-black border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                             </div>
                           ))}
                           <button onClick={() => addNestedArrayItem('experience', index, 'description')} className="text-xs font-bold text-retro-red hover:underline">+ Add Point</button>
@@ -340,12 +400,12 @@ export default function RepoView() {
                 <div>
                   <h4 className="flex items-center justify-between font-mono font-bold text-retro-red uppercase text-sm border-b-2 border-retro-black pb-1 mb-2">
                     Projects
-                    <button onClick={() => addArrayItem('projects', { name: '', description: '', link: '' })} className="p-1 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black"><Plus className="w-4 h-4" /></button>
+                    <button onClick={() => addArrayItem('projects', { name: '', description: '', link: '' })} className="p-2 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Plus className="w-5 h-5" /></button>
                   </h4>
                   <div className="space-y-6">
                     {(Array.isArray(resumeData.projects) ? resumeData.projects : []).map((proj, index) => (
-                      <div key={index} className="border-4 border-retro-black p-4 space-y-4 bg-white relative group shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-                        <button onClick={() => removeArrayItem('projects', index)} className="absolute top-2 right-2 text-retro-black hover:text-white hover:bg-retro-red p-1 transition-colors border-2 border-retro-black"><Trash2 className="w-4 h-4" /></button>
+                      <div key={index} className="border-4 border-retro-black p-4 space-y-4 bg-white relative group shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]">
+                        <button onClick={() => removeArrayItem('projects', index)} className="absolute top-3 right-3 text-retro-black hover:text-white hover:bg-retro-red p-2 transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                         <div className="grid grid-cols-2 gap-3 mt-4">
                           <input type="text" className="retro-input py-2 text-sm font-bold" placeholder="Project Name" value={proj.name || ''} onChange={(e) => updateArrayItem('projects', index, 'name', e.target.value)} />
                           <input type="text" className="retro-input py-2 text-sm font-bold" placeholder="Link (URL)" value={proj.link || ''} onChange={(e) => updateArrayItem('projects', index, 'link', e.target.value)} />
@@ -355,7 +415,7 @@ export default function RepoView() {
                           {getBullets(proj, 'description').map((bullet, bulletIdx) => (
                             <div key={bulletIdx} className="flex space-x-2">
                               <input type="text" className="retro-input py-1 text-sm flex-1 font-bold" value={bullet} onChange={(e) => updateNestedArrayItem('projects', index, 'description', bulletIdx, e.target.value)} />
-                              <button onClick={() => removeNestedArrayItem('projects', index, 'description', bulletIdx)} className="p-1 px-2 text-retro-black border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => removeNestedArrayItem('projects', index, 'description', bulletIdx)} className="p-2 px-3 text-retro-black border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                             </div>
                           ))}
                           <button onClick={() => addNestedArrayItem('projects', index, 'description')} className="text-xs font-bold text-retro-red hover:underline">+ Add Point</button>
@@ -369,12 +429,12 @@ export default function RepoView() {
                 <div>
                   <h4 className="flex items-center justify-between font-mono font-bold text-retro-red uppercase text-sm border-b-2 border-retro-black pb-1 mb-2">
                     Education
-                    <button onClick={() => addArrayItem('education', { institution: '', degree: '', graduationDate: '', details: '' })} className="p-1 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black"><Plus className="w-4 h-4" /></button>
+                    <button onClick={() => addArrayItem('education', { institution: '', degree: '', graduationDate: '', details: '' })} className="p-2 hover:bg-retro-black hover:text-white transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Plus className="w-5 h-5" /></button>
                   </h4>
                   <div className="space-y-6">
                     {(Array.isArray(resumeData.education) ? resumeData.education : []).map((edu, index) => (
-                      <div key={index} className="border-4 border-retro-black p-4 space-y-4 bg-white relative group shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
-                        <button onClick={() => removeArrayItem('education', index)} className="absolute top-2 right-2 text-retro-black hover:text-white hover:bg-retro-red p-1 transition-colors border-2 border-retro-black"><Trash2 className="w-4 h-4" /></button>
+                      <div key={index} className="border-4 border-retro-black p-4 space-y-4 bg-white relative group shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]">
+                        <button onClick={() => removeArrayItem('education', index)} className="absolute top-3 right-3 text-retro-black hover:text-white hover:bg-retro-red p-2 transition-colors border-2 border-retro-black shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                         <div className="grid grid-cols-2 gap-3 mt-4">
                           <input type="text" className="retro-input py-2 text-sm font-bold" placeholder="Institution" value={edu.institution || ''} onChange={(e) => updateArrayItem('education', index, 'institution', e.target.value)} />
                           <input type="text" className="retro-input py-2 text-sm font-bold" placeholder="Degree" value={edu.degree || ''} onChange={(e) => updateArrayItem('education', index, 'degree', e.target.value)} />
@@ -387,7 +447,7 @@ export default function RepoView() {
                           {getBullets(edu, 'details').map((bullet, bulletIdx) => (
                             <div key={bulletIdx} className="flex space-x-2">
                               <input type="text" className="retro-input py-1 text-sm flex-1 font-bold" value={bullet} onChange={(e) => updateNestedArrayItem('education', index, 'details', bulletIdx, e.target.value)} />
-                              <button onClick={() => removeNestedArrayItem('education', index, 'details', bulletIdx)} className="p-1 px-2 text-retro-black border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => removeNestedArrayItem('education', index, 'details', bulletIdx)} className="p-2 px-3 text-retro-black border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,1)]"><Trash2 className="w-5 h-5" /></button>
                             </div>
                           ))}
                           <button onClick={() => addNestedArrayItem('education', index, 'details')} className="text-xs font-bold text-retro-red hover:underline">+ Add Point</button>
@@ -399,8 +459,8 @@ export default function RepoView() {
               </div>
             </div>
 
-            <div className="flex flex-col flex-1 bg-retro-black border-4 border-retro-black min-h-0 min-w-0 shadow-[4px_4px_0px_0px_rgba(230,57,70,1)] p-4">
-              <h3 className="font-mono font-bold mb-4 border-b-2 border-white pb-2 text-white shrink-0 tracking-wider uppercase">Raw JSON Output</h3>
+            <div className="flex flex-col flex-1 bg-retro-black border-4 border-retro-black min-h-0 min-w-0 shadow-[6px_6px_0px_0px_rgba(230,57,70,1)] p-4">
+              <h3 className="font-mono font-bold mb-4 border-b-2 border-white pb-2 text-white shrink-0 tracking-wider uppercase bg-gradient-to-r from-white to-retro-red bg-clip-text text-transparent">Raw JSON Output</h3>
               <textarea
                 className="flex-1 w-full bg-retro-black text-white font-mono text-sm border-none focus:ring-0 resize-none outline-none overflow-y-auto leading-relaxed"
                 value={JSON.stringify(resumeData, null, 2)}
@@ -413,9 +473,9 @@ export default function RepoView() {
 
         {activeTab === 'history' && (
           <div className="retro-card flex-1 min-h-0 overflow-y-auto bg-white flex flex-col p-8">
-            <h3 className="font-mono text-xl font-bold border-b-4 border-retro-black pb-2 mb-8 tracking-wide flex justify-between">
+            <h3 className="font-mono text-2xl font-bold border-b-4 border-retro-black pb-2 mb-8 tracking-wide flex justify-between bg-gradient-to-r from-retro-black to-retro-red bg-clip-text text-transparent">
               Git Commit Graph
-              <span className="text-sm bg-retro-black text-white px-2 py-1">HEAD -&gt; {currentRepoInfo?.baseRepoId ? 'branch' : 'main'}</span>
+              <span className="text-sm bg-retro-black text-white px-3 py-1.5 shadow-[2px_2px_0px_0px_rgba(230,57,70,1)]">HEAD -&gt; {currentRepoInfo?.baseRepoId ? 'branch' : 'main'}</span>
             </h3>
 
             <div className="relative flex-1">
@@ -423,15 +483,15 @@ export default function RepoView() {
               <div className="absolute left-8 top-4 bottom-0 w-2 bg-retro-black transform -translate-x-1/2"></div>
 
               <div className="space-y-12 pb-8">
-                {commits.map((commit, cIdx) => (
+                {commits.map((commit) => (
                   <div key={commit._id} className="relative flex items-center group">
 
                     {/* Node Dot */}
                     <div 
-                      className="w-16 h-16 rounded-full bg-white border-8 border-retro-black absolute left-8 transform -translate-x-1/2 flex items-center justify-center z-10 hover:border-retro-red transition-colors shadow-[0px_0px_0px_4px_white] cursor-pointer"
+                      className="w-20 h-20 rounded-full bg-white border-8 border-retro-black absolute left-8 transform -translate-x-1/2 flex items-center justify-center z-10 hover:border-retro-red transition-colors shadow-[0px_0px_0px_4px_white] cursor-pointer hover:scale-110 transition-transform"
                       onClick={() => setActiveDropdown(activeDropdown === commit._id ? null : commit._id)}
                     >
-                      <GitCommit className="w-6 h-6 text-retro-black" />
+                      <GitCommit className="w-8 h-8 text-retro-black" />
 
                       {activeDropdown === commit._id && (
                         <div className="absolute top-16 left-0 mt-2 bg-white border-4 border-retro-black shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] z-50 flex flex-col min-w-[200px]">
@@ -449,7 +509,7 @@ export default function RepoView() {
                     </div>
 
                     {/* Commit Box */}
-                    <div className="ml-24 w-full max-w-2xl bg-retro-white border-4 border-retro-black p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-transform group-hover:-translate-y-1">
+                    <div className="ml-24 w-full max-w-2xl bg-retro-white border-4 border-retro-black p-5 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] transition-transform group-hover:-translate-y-1 group-hover:-translate-x-1">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-bold text-xl font-mono text-retro-black">
                           {commit.commitMessage.includes('[BRANCH]') ? (
@@ -459,13 +519,13 @@ export default function RepoView() {
                           ) : null}
                           {commit.commitMessage.replace('[BRANCH]', '').replace('[MERGE]', '')}
                         </h4>
-                        <span className="bg-white border-2 border-retro-black font-mono font-bold px-2 text-sm ml-4 whitespace-nowrap">v{commit.versionNumber}</span>
+                        <span className="bg-retro-black text-white border-2 border-retro-black font-mono font-bold px-3 py-1 text-sm ml-4 whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(230,57,70,1)]">v{commit.versionNumber}</span>
                       </div>
                       <div className="text-sm font-mono font-bold text-retro-gray mb-3 border-b-2 border-retro-gray pb-2">
                         {new Date(commit.createdAt).toLocaleString()}
                       </div>
 
-                      <div className="text-xs bg-white border-2 border-retro-gray p-2 max-h-32 overflow-y-auto">
+                      <div className="text-xs bg-retro-gray/30 border-2 border-retro-gray p-3 max-h-40 overflow-y-auto">
                         {commit.changes && commit.changes.length > 0 ? (
                           commit.changes.map((change, i) => (
                             change.added || change.removed ? (
@@ -494,21 +554,21 @@ export default function RepoView() {
 
         {activeTab === 'diff' && (
           <div className="retro-card flex-1 min-h-0 overflow-y-auto bg-retro-black text-white p-6">
-            <h3 className="font-mono text-xl font-bold border-b-4 border-white pb-2 mb-6 tracking-wide">Diff Viewer (Unified Patch)</h3>
+            <h3 className="font-mono text-2xl font-bold border-b-4 border-white pb-2 mb-6 tracking-wide bg-gradient-to-r from-white to-retro-red bg-clip-text text-transparent">Diff Viewer (Unified Patch)</h3>
             <div className="font-mono text-sm leading-relaxed whitespace-pre-wrap selection:bg-retro-red selection:text-white">
               {commits.length >= 2 ? (
                 <>
-                  <div className="mb-6 pb-2 border-b-2 border-retro-red inline-block font-bold">Comparing <span className="bg-white text-retro-black px-2 py-1 ml-1">v{commits[0].versionNumber}</span> against <span className="bg-white text-retro-black px-2 py-1 ml-1">v{commits[1].versionNumber}</span></div>
-                  <div className="bg-white text-retro-black p-4 border-4 border-retro-red">
+                  <div className="mb-6 pb-2 border-b-2 border-retro-red inline-block font-bold bg-retro-red/10 px-4 py-2 rounded">Comparing <span className="bg-white text-retro-black px-3 py-1.5 ml-1 shadow-[2px_2px_0px_0px_rgba(230,57,70,1)]">v{commits[0].versionNumber}</span> against <span className="bg-white text-retro-black px-3 py-1.5 ml-1 shadow-[2px_2px_0px_0px_rgba(230,57,70,1)]">v{commits[1].versionNumber}</span></div>
+                  <div className="bg-white text-retro-black p-5 border-4 border-retro-red shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
                     {commits[0].changes.map((c, i) => {
-                       if (c.added) return <span key={i} className="bg-green-200 text-green-900 w-full block">+{c.value}</span>;
-                       if (c.removed) return <span key={i} className="bg-retro-red text-white w-full block">-{c.value}</span>;
-                       return <span key={i} className="text-retro-gray block">{c.value}</span>;
+                       if (c.added) return <span key={i} className="bg-green-200 text-green-900 w-full block pl-2">+{c.value}</span>;
+                       if (c.removed) return <span key={i} className="bg-retro-red text-white w-full block pl-2">-{c.value}</span>;
+                       return <span key={i} className="text-retro-gray block pl-2">{c.value}</span>;
                      })}
                   </div>
                 </>
               ) : (
-                <div className="font-bold text-retro-red text-xl">Not enough commits to diff. Needs at least 2 versions.</div>
+                <div className="font-bold text-retro-red text-2xl">Not enough commits to diff. Needs at least 2 versions.</div>
               )}
             </div>
           </div>
@@ -516,12 +576,12 @@ export default function RepoView() {
 
         {activeTab === 'notes' && (
           <div className="retro-card flex-1 min-h-0 bg-white p-6 flex flex-col">
-            <h3 className="font-mono text-xl font-bold border-b-4 border-retro-black pb-2 mb-6 tracking-wide flex items-center">
-              <StickyNote className="w-6 h-6 mr-3 text-retro-red" /> Performance Tracking Notes
+            <h3 className="font-mono text-2xl font-bold border-b-4 border-retro-black pb-2 mb-6 tracking-wide flex items-center bg-gradient-to-r from-retro-black to-retro-red bg-clip-text text-transparent">
+              <StickyNote className="w-8 h-8 mr-3 text-retro-red" /> Performance Tracking Notes
             </h3>
             <p className="font-mono text-sm text-retro-black mb-4 font-bold tracking-tight">Document why this resume worked (or didn't) for this specific application.</p>
             <textarea
-              className="flex-1 w-full retro-input bg-retro-white text-retro-black font-mono text-base border-4 border-retro-black resize-none p-6 mb-6 leading-relaxed shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] outline-none focus:ring-0 focus:border-retro-red"
+              className="flex-1 w-full retro-input bg-retro-white text-retro-black font-mono text-base border-4 border-retro-black resize-none p-6 mb-6 leading-relaxed shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] outline-none focus:ring-0 focus:border-retro-red"
               placeholder="e.g., Google SWE Role: Recruiter loved the focus on React, but I should emphasize more on Distributed Systems next time. Rejection reason: N/A."
               value={repoNotes}
               onChange={(e) => setRepoNotes(e.target.value)}
@@ -529,7 +589,7 @@ export default function RepoView() {
             />
             <div className="flex justify-start">
               <button onClick={handleSaveNotes} className="retro-btn bg-retro-red text-white flex items-center px-6 py-3 border-4 border-retro-black hover:bg-black transition-colors font-bold shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:shadow-none translate-y-0 hover:translate-y-1 hover:translate-x-1 duration-150">
-                <Save className="w-5 h-5 mr-2" /> Save Notes
+                <Save className="w-6 h-6 mr-2" /> Save Notes
               </button>
             </div>
           </div>
@@ -538,23 +598,23 @@ export default function RepoView() {
 
       {/* AI Parsing Overlay */}
       {isParsing && (
-        <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center p-4 z-[60] backdrop-blur-sm shadow-[8px_8px_0px_0px_rgba(230,57,70,1)]">
-          <div className="w-16 h-16 border-4 border-retro-red border-t-white rounded-full animate-spin mb-6"></div>
-          <h2 className="text-3xl font-bold font-mono text-white tracking-widest uppercase animate-pulse">Gemma is Parsing...</h2>
-          <p className="text-retro-red font-mono font-bold mt-2">Extracting architecture from document</p>
+        <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center p-4 z-[60] backdrop-blur-sm shadow-[12px_12px_0px_0px_rgba(230,57,70,1)]">
+          <div className="w-20 h-20 border-4 border-retro-red border-t-white rounded-full animate-spin mb-6"></div>
+          <h2 className="text-4xl font-bold font-mono text-white tracking-widest uppercase animate-pulse">Gemma is Parsing...</h2>
+          <p className="text-retro-red font-mono font-bold mt-2 text-lg">Extracting architecture from document</p>
         </div>
       )}
 
       {showCommitModal && (
         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="retro-card max-w-md w-full bg-white relative border-4 border-retro-black shadow-[8px_8px_0px_0px_rgba(230,57,70,1)]">
+          <div className="retro-card max-w-md w-full bg-white relative border-4 border-retro-black shadow-[12px_12px_0px_0px_rgba(26,26,26,1)]">
             <h2 className="text-2xl font-bold font-mono border-b-4 border-retro-black pb-2 mb-6">Commit Changes</h2>
             <form onSubmit={handleCommit}>
               <div className="mb-6">
-                <label className="block font-mono text-base font-bold mb-2 text-retro-black">Commit Message</label>
+                <label className="block font-mono text-base font-bold mb-2 text-retro-black uppercase tracking-wider">Commit Message</label>
                 <input
                   type="text"
-                  className="retro-input py-2 text-base font-bold"
+                  className="retro-input py-3 text-base font-bold"
                   placeholder="e.g., Added new React project"
                   value={commitMessage}
                   onChange={e => setCommitMessage(e.target.value)}
@@ -562,13 +622,42 @@ export default function RepoView() {
                 />
               </div>
               <div className="flex justify-end space-x-4 border-t-2 border-retro-black pt-4">
-                <button type="button" onClick={() => setShowCommitModal(false)} className="px-4 py-2 font-mono font-bold bg-white text-retro-black border-2 border-retro-black hover:bg-retro-black hover:text-white transition-colors">Abort</button>
-                <button type="submit" className="retro-btn text-base py-2">Commit Target</button>
+                <button type="button" onClick={() => setShowCommitModal(false)} className="px-6 py-3 font-mono font-bold bg-white text-retro-black border-2 border-retro-black hover:bg-retro-black hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">Abort</button>
+                <button type="submit" className="retro-btn text-base py-3">Commit Target</button>
               </div>
             </form>
           </div>
         </div>
       )}
+      {/* Fork Modal */}
+      {showForkModal && (
+        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="retro-card max-w-md w-full bg-white relative border-4 border-retro-black shadow-[12px_12px_0px_0px_rgba(26,26,26,1)]">
+            <h2 className="text-2xl font-bold font-mono border-b-4 border-retro-black pb-2 mb-6">Fork Repository</h2>
+            <form onSubmit={handleFork}>
+              <div className="mb-6">
+                <label className="block font-mono text-base font-bold mb-2 text-retro-black uppercase tracking-wider">Fork Name</label>
+                <input
+                  type="text"
+                  className="retro-input py-3 text-base font-bold"
+                  placeholder={`${currentRepoInfo?.repoName || ''}-copy`}
+                  value={forkName}
+                  onChange={e => setForkName(e.target.value)}
+                  autoFocus
+                />
+                <p className="text-xs font-mono mt-2 text-retro-black italic border-l-4 border-retro-red pl-2">
+                  Creates a new branch fork from the latest commit of this repository.
+                </p>
+              </div>
+              <div className="flex justify-end space-x-4 border-t-2 border-retro-black pt-4">
+                <button type="button" onClick={() => { setShowForkModal(false); setForkName(''); }} className="px-6 py-3 font-mono font-bold bg-white text-retro-black border-2 border-retro-black hover:bg-retro-black hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">Abort</button>
+                <button type="submit" className="retro-btn text-base py-3">Create Fork</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Hidden PDF Template for react-to-print Engine */}
       <div className="hidden">
         <ResumePDFTemplate ref={pdfRef} data={resumeData} />

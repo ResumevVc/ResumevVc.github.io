@@ -33,6 +33,26 @@ export async function createRepo(repoName, baseRepoId = null, token) {
   return res.json();
 }
 
+export async function forkRepo(repoId, repoName, token) {
+  const res = await fetch(`${baseUrl}/repos/${repoId}/fork`, {
+    method: 'POST',
+    headers: getHeaders(token),
+    body: JSON.stringify({ repoName })
+  });
+  handleUnauth(res);
+  if (!res.ok) throw new Error('Failed to fork repo');
+  return res.json();
+}
+
+export async function getForks(repoId, token) {
+  const res = await fetch(`${baseUrl}/repos/${repoId}/forks`, {
+    headers: getHeaders(token)
+  });
+  handleUnauth(res);
+  if (!res.ok) throw new Error('Failed to fetch forks');
+  return res.json();
+}
+
 export async function deleteRepo(repoId, token) {
   const res = await fetch(`${baseUrl}/repos/${repoId}`, {
     method: 'DELETE',

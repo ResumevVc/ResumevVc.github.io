@@ -16,21 +16,21 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-retro-white text-retro-black font-mono overflow-x-hidden selection:bg-retro-red selection:text-white">
       {/* Navigation */}
-      <nav className="flex justify-between items-center p-6 border-b-4 border-retro-black bg-white sticky top-0 z-50">
+      <nav className="flex justify-between items-center p-6 border-b-4 border-retro-black bg-white sticky top-0 z-50 shadow-[0px_4px_0px_0px_rgba(26,26,26,1)]">
         <div className="flex items-center space-x-3 group cursor-pointer">
-          <div className="bg-retro-black text-white p-2 group-hover:bg-retro-red transition-colors duration-300">
-            <GitCommit className="w-6 h-6" />
+          <div className="bg-retro-black text-white p-3 group-hover:bg-retro-red transition-colors duration-300 shadow-[4px_4px_0px_0px_rgba(230,57,70,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] group-hover:-translate-y-1 group-hover:-translate-x-1 transition-all">
+            <GitCommit className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold tracking-widest uppercase">ResumevVc</h1>
+          <h1 className="text-2xl font-bold tracking-widest uppercase bg-gradient-to-r from-retro-black to-retro-red bg-clip-text text-transparent">ResumevVc</h1>
         </div>
         <div className="space-x-4 flex items-center">
-          <Link to="/login" className="font-bold hover:text-retro-red transition-colors uppercase text-sm tracking-widest hidden md:inline-block">Sign In</Link>
-          <Link to="/login" className="retro-btn shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-1 transition-transform">Get Started</Link>
+          <Link to="/login" className="font-bold hover:text-retro-red transition-colors uppercase text-sm tracking-widest hidden md:inline-block border-b-2 border-transparent hover:border-retro-red pb-1">Sign In</Link>
+          <Link to="/login" className="retro-btn shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-1 hover:-translate-x-1 transition-transform">Get Started</Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative px-6 py-24 md:py-32 flex flex-col items-center text-center overflow-hidden border-b-4 border-retro-black">
+      <section className="relative px-6 py-24 md:py-32 flex flex-col items-center text-center overflow-hidden border-b-4 border-retro-black bg-gradient-to-b from-retro-white to-retro-gray/30">
         {/* Background Decorative Elements */}
         <div className="absolute top-10 left-10 text-retro-gray opacity-20 pointer-events-none animate-pulse">
           <FileJson className="w-64 h-64" />
@@ -38,25 +38,26 @@ export default function Landing() {
         <div className="absolute -bottom-10 -right-10 text-retro-red opacity-10 pointer-events-none">
           <GitBranch className="w-96 h-96" />
         </div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-retro-red/5 to-transparent pointer-events-none"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto space-y-8">
-          <div className="inline-block bg-white border-2 border-retro-black px-4 py-1 mb-4 font-bold text-sm tracking-widest uppercase shadow-[2px_2px_0px_0px_rgba(230,57,70,1)] hover:-translate-y-1 transition-transform cursor-default">
+          <div className="inline-block bg-white border-2 border-retro-black px-6 py-2 mb-4 font-bold text-sm tracking-widest uppercase shadow-[4px_4px_0px_0px_rgba(230,57,70,1)] hover:-translate-y-1 hover:-translate-x-1 transition-transform cursor-default animate-bounce-slight">
             Version Control for your Career
           </div>
           
           <h2 className="text-5xl md:text-7xl font-bold leading-tight uppercase relative">
-            Treat your Resume <br/> like <span className="text-white bg-retro-black px-4 py-1 inline-block -rotate-2 hover:rotate-0 transition-transform duration-300 shadow-[8px_8px_0px_0px_rgba(230,57,70,1)]">Source Code</span>
+            Treat your Resume <br/> like <span className="text-white bg-retro-black px-6 py-2 inline-block -rotate-2 hover:rotate-0 transition-transform duration-300 shadow-[12px_12px_0px_0px_rgba(230,57,70,1)] hover:shadow-[16px_16px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-1 hover:-translate-x-1 transition-all">Source Code</span>
           </h2>
           
-          <p className="text-lg md:text-xl max-w-2xl mx-auto border-l-4 border-retro-red pl-4 text-left font-bold text-gray-700 bg-white/50 p-4">
+          <p className="text-lg md:text-xl max-w-2xl mx-auto border-l-4 border-retro-red pl-6 text-left font-bold text-gray-700 bg-white/80 p-6 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
             Track exactly which resume versions get you interviews and which ones get rejected. A powerful version control system to craft, branch, and log the performance of your professional identity.
           </p>
           
           <div className="pt-8 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Link to="/login" className="w-full sm:w-auto bg-retro-red text-white border-4 border-retro-black px-8 py-4 font-bold text-lg uppercase tracking-wider shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(26,26,26,1)] transition-all flex items-center justify-center group">
-              Compile Now <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
+            <Link to="/login" className="w-full sm:w-auto bg-retro-red text-white border-4 border-retro-black px-10 py-5 font-bold text-lg uppercase tracking-widest shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[16px_16px_0px_0px_rgba(26,26,26,1)] transition-all flex items-center justify-center group">
+              Compile Now <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-2 transition-transform" />
             </Link>
-            <a href="#features" className="w-full sm:w-auto bg-white text-retro-black border-4 border-retro-black px-8 py-4 font-bold text-lg uppercase tracking-wider hover:bg-retro-black hover:text-white transition-colors text-center">
+            <a href="#features" className="w-full sm:w-auto bg-white text-retro-black border-4 border-retro-black px-10 py-5 font-bold text-lg uppercase tracking-wider hover:bg-retro-black hover:text-white hover:shadow-[4px_4px_0px_0px_rgba(230,57,70,1)] transition-all text-center">
               View Specs
             </a>
           </div>
@@ -79,30 +80,40 @@ export default function Landing() {
       </div>
 
       {/* Template Showcase */}
-      <section className="py-24 px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16 border-b-4 border-retro-black">
+      <section className="py-24 px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16 border-b-4 border-retro-black bg-gradient-to-b from-retro-white to-retro-gray/30">
         <div className="md:w-1/2 space-y-6">
-          <div className="inline-block bg-retro-black text-white px-4 py-1 font-mono font-bold tracking-widest uppercase">
+          <div className="inline-block bg-retro-black text-white px-6 py-2 font-mono font-bold tracking-widest uppercase shadow-[4px_4px_0px_0px_rgba(230,57,70,1)]">
             Output Standard
           </div>
           <h3 className="text-4xl md:text-5xl font-bold uppercase leading-tight">
             Perfectly <br/><span className="text-retro-red">ATS-Optimized</span>
           </h3>
-          <p className="text-lg font-bold text-gray-700 leading-relaxed border-l-4 border-retro-black pl-4">
+          <p className="text-lg font-bold text-gray-700 leading-relaxed border-l-4 border-retro-black pl-6">
             Stop fighting with formatting. We strictly compile your repository into a classic, universally-readable monochrome PDF format. No messy columns, no confusing graphics—just clean, recruiter-approved data.
           </p>
+          <div className="pt-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex -space-x-2">
+                <div className="w-10 h-10 rounded-full bg-retro-black border-2 border-white flex items-center justify-center text-white font-bold text-xs">✓</div>
+                <div className="w-10 h-10 rounded-full bg-retro-red border-2 border-white flex items-center justify-center text-white font-bold text-xs">✓</div>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-retro-black flex items-center justify-center text-retro-black font-bold text-xs">✓</div>
+              </div>
+              <span className="text-sm font-mono font-bold text-retro-black">Trusted by 500+ Job Seekers</span>
+            </div>
+          </div>
         </div>
         <div className="md:w-1/2">
-          <div className="bg-white border-4 border-retro-black p-2 shadow-[12px_12px_0px_0px_rgba(230,57,70,1)] hover:-translate-y-2 hover:-translate-x-2 transition-transform duration-300 transform rotate-1">
+          <div className="bg-white border-4 border-retro-black p-2 shadow-[16px_16px_0px_0px_rgba(230,57,70,1)] hover:-translate-y-2 hover:-translate-x-2 transition-transform duration-300 transform rotate-1 hover:rotate-0">
             <img src="/resume-template.png" alt="Standard ATS Template Preview" className="w-full h-auto border-2 border-retro-gray opacity-90 hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="py-24 px-6 max-w-6xl mx-auto">
-        <h3 className="text-4xl font-bold uppercase text-center mb-16 border-b-4 border-retro-black inline-block mx-auto pb-2">Core Mechanics</h3>
+      <section id="features" className="py-24 px-6 max-w-6xl mx-auto bg-gradient-to-b from-retro-white to-retro-gray/30">
+        <h3 className="text-4xl font-bold uppercase text-center mb-16 border-b-4 border-retro-black inline-block mx-auto pb-2 bg-gradient-to-r from-retro-black to-retro-red bg-clip-text text-transparent">Core Mechanics</h3>
         
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             { 
               icon: HardDrive, 
@@ -135,11 +146,11 @@ export default function Landing() {
               desc: 'ResumevVc is fortified with Firebase Google Login, ensuring secure, passwordless authentication scaling effortlessly across modern ecosystems.'
             }
           ].map((feature, i) => (
-            <div key={i} className="bg-white border-4 border-retro-black p-8 shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[16px_16px_0px_0px_rgba(230,57,70,1)] transition-all group duration-300 flex flex-col">
-              <div className="bg-retro-black p-4 inline-block mb-6 text-white group-hover:bg-retro-red transition-colors self-start border-2 border-transparent group-hover:border-retro-black">
+            <div key={i} className="bg-white border-4 border-retro-black p-8 shadow-[8px_8px_0px_0px_rgba(26,26,26,1)] hover:shadow-[12px_12px_0px_0px_rgba(230,57,70,1)] hover:-translate-y-2 hover:-translate-x-2 transition-all group duration-300 flex flex-col">
+              <div className="bg-retro-black p-4 inline-block mb-6 text-white group-hover:bg-retro-red transition-colors self-start border-2 border-transparent group-hover:border-retro-black shadow-[4px_4px_0px_0px_rgba(230,57,70,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(26,26,26,1)]">
                 <feature.icon className="w-8 h-8" />
               </div>
-              <h4 className="text-2xl font-bold mb-4 uppercase">{feature.title}</h4>
+              <h4 className="text-2xl font-bold mb-4 uppercase bg-gradient-to-r from-retro-black to-retro-red bg-clip-text text-transparent">{feature.title}</h4>
               <p className="text-base leading-relaxed font-bold text-gray-700">{feature.desc}</p>
             </div>
           ))}
@@ -147,10 +158,14 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t-4 border-retro-black p-8 text-center">
-        <div className="flex items-center justify-center space-x-2 text-retro-black font-bold uppercase tracking-widest">
-          <GitCommit className="w-5 h-5 text-retro-red" />
+      <footer className="bg-white border-t-4 border-retro-black p-8 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-retro-red/5 to-transparent pointer-events-none"></div>
+        <div className="flex items-center justify-center space-x-2 text-retro-black font-bold uppercase tracking-widest relative z-10">
+          <GitCommit className="w-6 h-6 text-retro-red" />
           <span>ResumevVc Core Systems © {new Date().getFullYear()}</span>
+        </div>
+        <div className="mt-4 text-sm text-retro-gray font-mono relative z-10">
+          <p>Version 1.0.0 • Secure • ATS-Compliant</p>
         </div>
       </footer>
       
