@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { FileJson, History, GitCompare, Save, FileUp, Plus, Trash2, GitMerge, GitCommit, StickyNote } from 'lucide-react';
+import { FileJson, History, GitCompare, Save, FileUp, Plus, Trash2, GitMerge, GitCommit, StickyNote, GitBranch } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCommits, createCommit, mergeRepo, getRepos, updateRepoNotes, parseResume, forkRepo, getForks } from '../services/api';
 import { useReactToPrint } from 'react-to-print';
