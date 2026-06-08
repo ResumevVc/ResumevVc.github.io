@@ -59,6 +59,32 @@ export default function RepoView() {
     }
   }, [getTokenSilently, repoId]);
 
+  const fetchForks = useCallback(async () => {
+    try {
+      const token = await getTokenSilently();
+      const data = await getForks(repoId, token);
+      setForks(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [getTokenSilently, repoId]);
+
+  const handleFork = async (e) => {
+    e.preventDefault();
+    if (!forkName.trim()) return;
+    try {
+      const token = await getTokenSilently();
+      const newFork = await forkRepo(repoId, forkName, token);
+      setShowForkModal(false);
+      setForkName('');
+      fetchForks();
+      alert(`Fork "${newFork.repoName}" created successfully!`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to fork repo');
+    }
+  };
+
   useEffect(() => {
     fetchCommits();
     fetchRepoInfo();
@@ -176,32 +202,6 @@ export default function RepoView() {
     } catch (err) {
       console.error(err);
       alert("Merge failed.");
-    }
-  };
-
-  const fetchForks = useCallback(async () => {
-    try {
-      const token = await getTokenSilently();
-      const data = await getForks(repoId, token);
-      setForks(data);
-    } catch (err) {
-      console.error(err);
-    }
-  }, [getTokenSilently, repoId]);
-
-  const handleFork = async (e) => {
-    e.preventDefault();
-    if (!forkName.trim()) return;
-    try {
-      const token = await getTokenSilently();
-      const newFork = await forkRepo(repoId, forkName, token);
-      setShowForkModal(false);
-      setForkName('');
-      fetchForks();
-      alert(`Fork "${newFork.repoName}" created successfully!`);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to fork repo');
     }
   };
 
