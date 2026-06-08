@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
@@ -20,25 +20,25 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Error during Google Sign In:', error);
     }
-  };
+  }, []);
 
-  const loginWithEmail = async (email, password) => {
+  const loginWithEmail = useCallback(async (email, password) => {
     await signInWithEmailAndPassword(auth, email, password);
-  };
+  }, []);
 
-  const signupWithEmail = async (email, password) => {
+  const signupWithEmail = useCallback(async (email, password) => {
     await createUserWithEmailAndPassword(auth, email, password);
-  };
+  }, []);
 
-  const logoutAction = async () => {
+  const logoutAction = useCallback(async () => {
     await signOut(auth);
-  };
+  }, []);
 
   const value = {
     user,
@@ -48,12 +48,12 @@ export function AuthProvider({ children }) {
     loginWithEmail,
     signupWithEmail,
     logout: logoutAction,
-    getTokenSilently: async () => {
+    getTokenSilently: useCallback(async () => {
       if (user) {
         return await user.getIdToken();
       }
       throw new Error('No user logged in');
-    }
+    }, [user])
   };
 
   return (

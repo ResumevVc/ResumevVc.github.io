@@ -14,10 +14,24 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 // Initialize Firebase Authentication and get a reference to the service
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Initialize Analytics with error handling
+let analytics = null;
+try {
+    analytics = getAnalytics(app);
+} catch (error) {
+    console.warn('Firebase Analytics failed to initialize:', error.message);
+    // Create a dummy analytics object to prevent errors in other parts of the code
+    analytics = {
+        logEvent: () => {},
+        setCurrentScreen: () => {},
+        setUserId: () => {},
+        setUserProperties: () => {}
+    };
+}
 
 export { app, auth, googleProvider, analytics };

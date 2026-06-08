@@ -42,9 +42,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-retro-red p-4 selection:bg-retro-black selection:text-white">
-      <div className="retro-card max-w-md w-full bg-white relative border-4 border-retro-black shadow-[16px_16px_0px_0px_rgba(26,26,26,1)] p-8">
-        <h2 className="text-3xl font-bold font-mono mb-6 border-b-4 border-retro-black pb-4 text-center tracking-wider text-retro-black uppercase">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-retro-red/20 to-retro-white p-4 selection:bg-retro-black selection:text-white">
+      <div className="retro-card max-w-md w-full bg-white relative border-4 border-retro-black shadow-[20px_20px_0px_0px_rgba(26,26,26,1)] p-8">
+        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-retro-black text-white px-6 py-2 font-mono font-bold uppercase tracking-widest border-2 border-retro-black shadow-[4px_4px_0px_0px_rgba(230,57,70,1)]">
+          Authentication Required
+        </div>
+        
+        <h2 className="text-3xl font-bold font-mono mb-6 border-b-4 border-retro-black pb-4 text-center tracking-wider text-retro-black uppercase mt-6">
           {isLoginMode ? 'Access Terminal' : 'Initialize User'}
         </h2>
         
@@ -53,17 +57,20 @@ export default function Login() {
         )}
 
         {errorMsg && (
-          <div className="bg-retro-red text-white p-3 font-mono font-bold border-4 border-retro-black mb-6 animate-pulse">
-            ! ERROR: {errorMsg}
+          <div className="bg-retro-red text-white p-4 font-mono font-bold border-4 border-retro-black mb-6 animate-pulse shadow-[4px_4px_0px_0px_rgba(26,26,26,1)]">
+            <div className="flex items-center">
+              <span className="text-2xl mr-2">!</span>
+              <span>ERROR: {errorMsg}</span>
+            </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           <div>
-            <label className="block text-sm font-bold font-mono text-retro-black mb-1 uppercase">Email Identity_</label>
+            <label className="block text-sm font-bold font-mono text-retro-black mb-2 uppercase tracking-wider">Email Identity_</label>
             <input 
               type="email" 
-              className="w-full retro-input py-3 px-4 text-lg font-mono focus:border-retro-red outline-none border-4 transition-colors"
+              className="w-full retro-input py-3 px-4 text-lg font-mono focus:border-retro-red outline-none border-4 transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,0.1)]"
               placeholder="user@network.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -71,10 +78,10 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className="block text-sm font-bold font-mono text-retro-black mb-1 uppercase">Passphrase_</label>
+            <label className="block text-sm font-bold font-mono text-retro-black mb-2 uppercase tracking-wider">Passphrase_</label>
             <input 
               type="password" 
-              className="w-full retro-input py-3 px-4 text-lg font-mono focus:border-retro-red outline-none border-4 transition-colors"
+              className="w-full retro-input py-3 px-4 text-lg font-mono focus:border-retro-red outline-none border-4 transition-colors shadow-[2px_2px_0px_0px_rgba(26,26,26,0.1)]"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -92,16 +99,16 @@ export default function Login() {
         </form>
 
         <div className="flex items-center justify-center space-x-4 mb-6 font-mono text-retro-gray">
-          <div className="h-0.5 w-1/4 bg-retro-black"></div>
-          <span className="font-bold">OR</span>
-          <div className="h-0.5 w-1/4 bg-retro-black"></div>
+          <div className="h-px w-1/4 bg-retro-black"></div>
+          <span className="font-bold uppercase tracking-widest">OR</span>
+          <div className="h-px w-1/4 bg-retro-black"></div>
         </div>
 
         <button 
           type="button"
           onClick={() => loginWithGoogle()} 
           disabled={formLoading || isLoading}
-          className="retro-btn w-full bg-retro-black text-white hover:bg-white hover:text-retro-black border-4 border-retro-black transition-colors font-bold text-center py-3 flex items-center justify-center"
+          className="retro-btn-secondary w-full hover:bg-retro-black hover:text-white border-4 border-retro-black transition-colors font-bold text-center py-3 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] hover:shadow-[6px_6px_0px_0px_rgba(230,57,70,1)]"
         >
           <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -119,7 +126,7 @@ export default function Login() {
               setIsLoginMode(!isLoginMode);
               setErrorMsg('');
             }}
-            className="font-mono text-sm font-bold text-retro-black hover:text-retro-red hover:underline uppercase tracking-wide"
+            className="font-mono text-sm font-bold text-retro-black hover:text-retro-red hover:underline uppercase tracking-widest transition-colors"
           >
             {isLoginMode ? 'Need Clearance? Create Account >>' : '<< Back to Login'}
           </button>

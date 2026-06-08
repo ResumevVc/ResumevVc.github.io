@@ -4,24 +4,48 @@
 
 @layer base {
   body {
-    @apply bg-retro-white text-retro-black font-sans m-0 p-0;
+    @apply bg-retro-white text-retro-black font-sans m-0 p-0 antialiased;
+  }
+  
+  * {
+    @apply transition-colors duration-200;
   }
 }
 
 @layer components {
   .retro-btn {
-    @apply px-4 py-2 bg-retro-black text-retro-white font-mono uppercase tracking-wider border-2 border-retro-black hover:bg-retro-red hover:text-white transition-colors duration-200;
+    @apply px-6 py-3 bg-retro-black text-white font-mono uppercase tracking-widest border-2 border-retro-black hover:bg-retro-red hover:border-retro-red hover:shadow-[4px_4px_0px_0px_rgba(230,57,70,1)] active:shadow-none active:translate-y-1 active:translate-x-1 transition-all duration-150;
+  }
+  
+  .retro-btn-secondary {
+    @apply px-6 py-3 bg-white text-retro-black font-mono uppercase tracking-widest border-2 border-retro-black hover:bg-retro-gray hover:border-retro-black active:shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] active:translate-y-1 active:translate-x-1 transition-all duration-150;
   }
   
   .retro-input {
-    @apply w-full px-3 py-2 bg-white border-2 border-retro-black focus:outline-none focus:border-retro-red font-mono text-sm;
+    @apply w-full px-4 py-3 bg-white border-2 border-retro-black focus:outline-none focus:border-retro-red focus:ring-4 focus:ring-retro-red/10 font-mono text-base transition-all duration-200;
+  }
+  
+  .retro-input-sm {
+    @apply px-3 py-2 bg-white border-2 border-retro-black focus:outline-none focus:border-retro-red font-mono text-sm transition-all duration-200;
   }
 
   .retro-card {
-    @apply bg-white border-2 border-retro-black p-4 shadow-[4px_4px_0px_0px_rgba(26,26,26,1)];
+    @apply bg-white border-2 border-retro-black p-6 shadow-[6px_6px_0px_0px_rgba(26,26,26,1)] hover:shadow-[8px_8px_0px_0px_rgba(230,57,70,1)] hover:-translate-y-1 hover:-translate-x-1 transition-all duration-200;
+  }
+  
+  .retro-card-dark {
+    @apply bg-retro-black border-2 border-retro-black p-6 shadow-[6px_6px_0px_0px_rgba(230,57,70,1)] text-white;
   }
   
   .retro-border {
     @apply border-2 border-retro-black;
+  }
+  
+  .retro-section {
+    @apply py-16 md:py-24;
+  }
+  
+  .retro-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-retro-black via-retro-black to-retro-red;
   }
 }
